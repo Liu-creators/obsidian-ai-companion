@@ -1,99 +1,148 @@
-import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
-import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import { Plugin } from 'obsidian';
+import { AIPluginSettings, AIPluginSettingTab } from "./settings";
+import { SettingsManager } from './services/settings-manager';
+import { AIClient } from './services/ai-client';
+import { EditorUIController } from './ui/editor-ui-controller';
+import { CalloutStyleManager } from './ui/callout-style-manager';
+import { AIEditorSuggest } from './suggest';
+import { CommandRegistry } from './commands';
+import { CanvasTriggerHandler } from './canvas/canvas-trigger-handler';
+import { CanvasUIController } from './canvas/canvas-ui-controller';
 
-// Remember to rename these classes and interfaces!
-
-export default class HelloWorldPlugin extends Plugin {
-	settings: MyPluginSettings;
+/**
+ * Obsidian AI 扩展插件
+ * 
+ * 主插件类，负责插件的生命周期管理和模块初始化。
+ * 
+ * **验证需求：所有需求**
+ */
+export default class MyPlugin extends Plugin {
+	settings: AIPluginSettings;
+	settingsManager: SettingsManager;
+	aiClient: AIClient;
+	editorUIController: EditorUIController;
+	calloutStyleManager: CalloutStyleManager;
+	aiEditorSuggest: AIEditorSuggest;
+	commandRegistry: CommandRegistry;
+	canvasTriggerHandler?: CanvasTriggerHandler;
+	canvasUIController?: CanvasUIController;
 
 	async onload() {
-		await this.loadSettings();
+		// 初始化设置管理器
+		this.settingsManager = new SettingsManager(this);
+		await this.settingsManager.loadSettings();
+		this.settings = this.settingsManager.getSettings();
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+		// 初始化 AI 客户端
+		const aiConfig = this.settingsManager.getAIConfig();
+		this.aiClient = new AIClient(aiConfig);
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
+		// 初始化 Callout 样式管理器
+		this.calloutStyleManager = new CalloutStyleManager(this);
+		this.calloutStyleManager.initialize();
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection('Sample editor command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
+		// 初始化编辑器 UI 控制器
+		this.editorUIController = new EditorUIController(this, this.aiClient);
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+		// 初始化并注册 AI 编辑器建议
+		this.aiEditorSuggest = new AIEditorSuggest(this.app, this, this.editorUIController);
+		this.registerEditorSuggest(this.aiEditorSuggest);
+
+		// 条件初始化 Canvas 功能（检查 API 可用性）
+		this.initializeCanvasFeatures();
+
+		// 初始化并注册命令
+		this.commandRegistry = new CommandRegistry(this, this.editorUIController);
+		this.commandRegistry.registerCommands();
+
+		// 添加设置面板
+		this.addSettingTab(new AIPluginSettingTab(this.app, this));
+		
+		if (this.settings.debugMode) {
+			console.log('[AI Plugin] 插件已加载');
+		}
+	}
+
+	/**
+	 * 条件初始化 Canvas 功能
+	 * 
+	 * ⚠️ Canvas API 是实验性功能，仅在 API 可用时初始化。
+	 * 
+	 * **验证需求：6.7**
+	 */
+	private initializeCanvasFeatures(): void {
+		try {
+			// 初始化 Canvas UI 控制器
+			this.canvasUIController = new CanvasUIController(this, this.aiClient);
+			
+			// 检查 Canvas API 是否可用
+			if (this.canvasUIController.getAPIAvailability()) {
+				// 初始化 Canvas 触发处理器
+				this.canvasTriggerHandler = new CanvasTriggerHandler(this);
+				
+				// 注册 Canvas 事件监听
+				this.canvasTriggerHandler.register();
+				
+				if (this.settings.debugMode) {
+					console.log('[AI Plugin] Canvas 功能已启用');
 				}
-				return false;
+			} else {
+				if (this.settings.debugMode) {
+					console.log('[AI Plugin] Canvas API 不可用，Canvas 功能已禁用');
+				}
 			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			new Notice("Click");
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-
+		} catch (error) {
+			console.error('[AI Plugin] Canvas 功能初始化失败:', error);
+			// 优雅降级：即使 Canvas 初始化失败，插件的其他功能仍然可用
+		}
 	}
 
 	onunload() {
+		// 清理编辑器 UI 资源
+		if (this.editorUIController) {
+			this.editorUIController.cleanup();
+		}
+		
+		// 清理 Callout 样式
+		if (this.calloutStyleManager) {
+			this.calloutStyleManager.cleanup();
+		}
+		
+		// 清理 Canvas 资源
+		if (this.canvasTriggerHandler) {
+			this.canvasTriggerHandler.unregister();
+		}
+		
+		if (this.canvasUIController) {
+			this.canvasUIController.cleanup();
+		}
+		
+		if (this.settings.debugMode) {
+			console.log('[AI Plugin] 插件已卸载');
+		}
 	}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+	/**
+	 * 保存设置
+	 * 
+	 * 通过 SettingsManager 保存设置，会自动进行 API 连接验证。
+	 */
+	async saveSettings(): Promise<void> {
+		this.settingsManager.updateSettings(this.settings);
+		await this.settingsManager.saveSettings();
+		
+		// 更新 AI 客户端配置
+		const aiConfig = this.settingsManager.getAIConfig();
+		this.aiClient.updateConfig(aiConfig);
+		
+		// 更新上下文提取器配置
+		if (this.editorUIController) {
+			this.editorUIController.updateContextExtractor();
+		}
+		
+		// 更新 Callout 样式
+		if (this.calloutStyleManager) {
+			this.calloutStyleManager.updateStyles();
+		}
 	}
 }

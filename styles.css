@@ -3,6 +3,442 @@
 This CSS file will be included with your plugin, and
 available in the app when your plugin is enabled.
 
-If your plugin does not need CSS, delete this file.
+验证需求：2.6, 4.2
 
 */
+
+/* ============================================
+   AI 编辑器建议样式（EditorSuggest）
+   ============================================ */
+
+/* 建议容器 */
+.suggestion-container.mod-ai-suggest {
+	min-width: 400px;
+	max-width: 600px;
+	padding: 4px;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 建议项 */
+.ai-suggestion-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	cursor: pointer;
+	border-radius: 6px;
+	transition: all 0.2s ease;
+	background-color: transparent;
+}
+
+.ai-suggestion-item:hover,
+.ai-suggestion-item.is-selected {
+	background-color: var(--background-modifier-hover);
+}
+
+/* 图标样式 */
+.ai-suggestion-icon {
+	font-size: 1.5em;
+	line-height: 1;
+	flex-shrink: 0;
+	filter: grayscale(0);
+	transition: transform 0.2s ease;
+}
+
+.ai-suggestion-item:hover .ai-suggestion-icon {
+	transform: scale(1.1);
+}
+
+/* 文本内容 */
+.ai-suggestion-text {
+	flex: 1;
+	color: var(--text-normal);
+	font-size: 0.95em;
+	line-height: 1.4;
+	word-break: break-word;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+/* 空提示样式 */
+.ai-suggestion-text.is-empty {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* 提示文本 */
+.ai-suggestion-hint {
+	display: block;
+	font-size: 0.8em;
+	color: var(--text-faint);
+	margin-top: 4px;
+	opacity: 0.7;
+}
+
+/* 快捷键提示 */
+.ai-suggestion-hotkey {
+	margin-left: auto;
+	padding: 2px 6px;
+	font-size: 0.75em;
+	color: var(--text-muted);
+	background-color: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	font-family: var(--font-monospace);
+}
+
+/* 暗色主题优化 */
+.theme-dark .suggestion-container.mod-ai-suggest {
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+	border-color: var(--background-modifier-border-hover);
+}
+
+/* ============================================
+   加载指示器样式
+   ============================================ */
+
+.ai-loading-indicator {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	margin: 8px 0;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 3px solid var(--interactive-accent);
+	animation: ai-fade-in 0.3s ease;
+}
+
+@keyframes ai-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.ai-loading-spinner {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+}
+
+.ai-loading-dot {
+	width: 8px;
+	height: 8px;
+	background-color: var(--interactive-accent);
+	border-radius: 50%;
+	animation: ai-loading-bounce 1.4s infinite ease-in-out both;
+}
+
+.ai-loading-dot:nth-child(1) {
+	animation-delay: -0.32s;
+}
+
+.ai-loading-dot:nth-child(2) {
+	animation-delay: -0.16s;
+}
+
+@keyframes ai-loading-bounce {
+	0%, 80%, 100% {
+		transform: scale(0.8);
+		opacity: 0.5;
+	}
+	40% {
+		transform: scale(1.2);
+		opacity: 1;
+	}
+}
+
+.ai-loading-message {
+	color: var(--text-muted);
+	font-size: 0.9em;
+	font-style: italic;
+}
+
+/* 加载指示器的取消按钮 */
+.ai-loading-cancel {
+	margin-left: auto;
+	padding: 4px 8px;
+	font-size: 0.85em;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--interactive-normal);
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.ai-loading-cancel:hover {
+	background-color: var(--interactive-hover);
+	color: var(--text-normal);
+}
+
+/* ============================================
+   错误显示样式
+   ============================================ */
+
+.ai-error-display {
+	display: flex;
+	gap: 12px;
+	padding: 12px 16px;
+	margin: 8px 0;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 3px solid var(--text-error);
+	animation: ai-fade-in 0.3s ease;
+}
+
+.ai-error-display.ai-error-retryable {
+	border-left-color: var(--text-warning);
+}
+
+.ai-error-icon {
+	font-size: 1.2em;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.ai-error-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ai-error-message {
+	color: var(--text-normal);
+	font-weight: 500;
+	line-height: 1.4;
+}
+
+.ai-error-details {
+	color: var(--text-muted);
+	font-size: 0.85em;
+	line-height: 1.4;
+	padding: 8px;
+	background-color: var(--background-primary);
+	border-radius: 4px;
+	font-family: var(--font-monospace);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.ai-error-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 4px;
+}
+
+.ai-error-retry,
+.ai-error-close {
+	padding: 4px 12px;
+	font-size: 0.85em;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--interactive-normal);
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.ai-error-retry:hover,
+.ai-error-close:hover {
+	background-color: var(--interactive-hover);
+}
+
+.ai-error-retry {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.ai-error-retry:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+/* ============================================
+   可折叠块样式
+   ============================================ */
+
+details.ai-collapsible-block {
+	margin: 8px 0;
+	padding: 12px;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 3px solid var(--interactive-accent);
+	transition: background-color 0.2s ease;
+}
+
+details.ai-collapsible-block:hover {
+	background-color: var(--background-secondary-alt);
+}
+
+details.ai-collapsible-block summary {
+	cursor: pointer;
+	font-weight: 500;
+	padding: 4px 8px;
+	user-select: none;
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+details.ai-collapsible-block summary::-webkit-details-marker {
+	display: none;
+}
+
+details.ai-collapsible-block summary::before {
+	content: '▶';
+	display: inline-block;
+	transition: transform 0.2s ease;
+	font-size: 0.8em;
+	opacity: 0.7;
+}
+
+details.ai-collapsible-block[open] summary::before {
+	transform: rotate(90deg);
+}
+
+details.ai-collapsible-block summary:hover::before {
+	opacity: 1;
+}
+
+details.ai-collapsible-block .ai-response-content {
+	padding: 8px;
+	margin-top: 8px;
+	line-height: 1.6;
+}
+
+/* 可折叠块的元数据显示 */
+.ai-response-metadata {
+	display: flex;
+	gap: 12px;
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid var(--background-modifier-border);
+	font-size: 0.8em;
+	color: var(--text-muted);
+}
+
+.ai-response-metadata-item {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* ============================================
+   Canvas 相关样式
+   ============================================ */
+
+/* Canvas 节点中的 AI 标记 */
+.canvas-node.ai-generated {
+	border-color: var(--interactive-accent) !important;
+}
+
+.canvas-node.ai-generated::before {
+	content: '🤖';
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	font-size: 1.2em;
+	opacity: 0.6;
+}
+
+/* ============================================
+   设置面板样式
+   ============================================ */
+
+.ai-plugin-setting-item {
+	padding: 12px 0;
+}
+
+.ai-plugin-setting-item .setting-item-info {
+	flex-grow: 1;
+}
+
+.ai-plugin-setting-item .setting-item-control {
+	flex-shrink: 0;
+}
+
+/* 连接测试按钮 */
+.ai-test-connection-btn {
+	margin-top: 8px;
+}
+
+.ai-test-connection-btn.success {
+	background-color: var(--color-green);
+	color: white;
+}
+
+.ai-test-connection-btn.error {
+	background-color: var(--text-error);
+	color: white;
+}
+
+/* API 密钥输入框 */
+.ai-api-key-input {
+	font-family: var(--font-monospace);
+	letter-spacing: 0.5px;
+}
+
+/* ============================================
+   响应式设计
+   ============================================ */
+
+@media (max-width: 768px) {
+	.ai-loading-indicator,
+	.ai-error-display {
+		padding: 10px 12px;
+		font-size: 0.9em;
+	}
+	
+	.ai-error-actions {
+		flex-direction: column;
+	}
+	
+	.ai-error-retry,
+	.ai-error-close {
+		width: 100%;
+		text-align: center;
+	}
+}
+
+/* ============================================
+   暗色主题优化
+   ============================================ */
+
+.theme-dark .ai-loading-indicator,
+.theme-dark .ai-error-display,
+.theme-dark details.ai-collapsible-block {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   打印样式
+   ============================================ */
+
+@media print {
+	.ai-loading-indicator,
+	.ai-error-display {
+		display: none;
+	}
+	
+	details.ai-collapsible-block {
+		border: 1px solid #ccc;
+	}
+	
+	details.ai-collapsible-block[open] summary::before {
+		content: '';
+	}
+}

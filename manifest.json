@@ -1,11 +1,10 @@
 {
-	"id": "hello-world",
-	"name": "Hello World",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"id": "obsidian-ai-extensions",
+	"name": "AI Extensions",
+	"version": "0.1.0",
+	"minAppVersion": "1.0.0",
+	"description": "为 Obsidian 提供 AI 辅助功能，支持在 Markdown 编辑器和 Canvas 画布中与 AI 交互，提升写作和思维整理效率",
+	"author": "Your Name",
+	"authorUrl": "https://github.com/yourusername",
+	"isDesktopOnly": true
 }

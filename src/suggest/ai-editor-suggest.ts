@@ -1,0 +1,224 @@
+/**
+ * AI 编辑器建议
+ * 
+ * 继承 Obsidian 的 EditorSuggest 类，实现 AI 触发和建议功能。
+ * 当用户在编辑器中输入 `/` 时，显示 AI 建议界面并捕获后续输入作为 prompt。
+ * 
+ * **验证需求：2.1, 2.3, 2.4, 2.5, 2.7**
+ */
+
+import { App, Editor, EditorPosition, EditorSuggest, TFile } from 'obsidian';
+import { AISuggestion } from '../types';
+import { EditorUIController } from '../ui/editor-ui-controller';
+import type MyPlugin from '../main';
+
+/**
+ * EditorSuggestContext 接口
+ * 
+ * 从 Obsidian API 导入的上下文接口
+ */
+interface EditorSuggestContext {
+	editor: Editor;
+	file: TFile;
+	start: EditorPosition;
+	end: EditorPosition;
+	query: string;
+}
+
+/**
+ * EditorSuggestTriggerInfo 接口
+ * 
+ * 触发信息接口
+ */
+interface EditorSuggestTriggerInfo {
+	start: EditorPosition;
+	end: EditorPosition;
+	query: string;
+}
+
+/**
+ * AI 编辑器建议类
+ * 
+ * 实现基于 `/` 触发符的 AI 建议功能。
+ */
+export class AIEditorSuggest extends EditorSuggest<AISuggestion> {
+	private plugin: MyPlugin;
+	private editorUIController: EditorUIController;
+	
+	constructor(app: App, plugin: MyPlugin, editorUIController: EditorUIController) {
+		super(app);
+		this.plugin = plugin;
+		this.editorUIController = editorUIController;
+	}
+	
+	/**
+	 * 检测触发符
+	 * 
+	 * 在每次按键时调用，检测是否应该触发 AI 建议。
+	 * 性能关键：尽早返回 null 以避免影响编辑器性能。
+	 * 
+	 * **验证需求：2.1, 2.7**
+	 * 
+	 * @param cursor 光标位置
+	 * @param editor 编辑器实例
+	 * @param file 当前文件
+	 * @returns 触发信息或 null
+	 */
+	onTrigger(
+		cursor: EditorPosition,
+		editor: Editor,
+		file: TFile | null
+	): EditorSuggestTriggerInfo | null {
+		// 性能优化：如果没有文件，尽早返回
+		if (!file) {
+			return null;
+		}
+		
+		// 获取当前行的文本
+		const line = editor.getLine(cursor.line);
+		
+		// 性能优化：如果光标在行首，不可能有触发符
+		if (cursor.ch === 0) {
+			return null;
+		}
+		
+		// 获取光标前的文本
+		const textBeforeCursor = line.substring(0, cursor.ch);
+		
+		// 使用正则表达式匹配 `/` 触发符
+		// 修改后的匹配模式：行首或空格后的 `/`，后面可以包含任意字符（包括空格）
+		// 这样可以支持包含空格的双链，如 [[My Document]]
+		const triggerRegex = /(?:^|\s)(\/(.*)?)$/;
+		const match = triggerRegex.exec(textBeforeCursor);
+		
+		// 性能优化：如果没有匹配，尽早返回
+		if (!match || !match[1]) {
+			return null;
+		}
+		
+		// 提取匹配的文本
+		const matchedText = match[1]; // 包含 `/` 的完整匹配
+		const query = match[2] || ''; // 去掉 `/` 后的查询文本（可能包含空格）
+		
+		// 计算触发位置
+		const startCh = cursor.ch - matchedText.length;
+		const start: EditorPosition = {
+			line: cursor.line,
+			ch: startCh
+		};
+		
+		const end: EditorPosition = {
+			line: cursor.line,
+			ch: cursor.ch
+		};
+		
+		return {
+			start,
+			end,
+			query
+		};
+	}
+	
+	/**
+	 * 获取建议列表
+	 * 
+	 * 根据上下文生成 AI 建议项。
+	 * 
+	 * **验证需求：2.3**
+	 * 
+	 * @param context 编辑器建议上下文
+	 * @returns 建议项数组
+	 */
+	getSuggestions(context: EditorSuggestContext): AISuggestion[] {
+		const query = context.query;
+		
+		// 创建 AI 建议项
+		const suggestion: AISuggestion = {
+			type: 'ai-prompt',
+			prompt: query,
+			displayText: query || '输入您的问题...'
+		};
+		
+		return [suggestion];
+	}
+	
+	/**
+	 * 渲染建议项
+	 * 
+	 * 在建议列表中显示建议项。
+	 * 
+	 * @param suggestion 建议项
+	 * @param el HTML 元素
+	 */
+	renderSuggestion(suggestion: AISuggestion, el: HTMLElement): void {
+		// 清空元素
+		el.empty();
+		el.addClass('ai-suggestion-item');
+		
+		// 添加图标
+		const icon = el.createSpan({ cls: 'ai-suggestion-icon' });
+		icon.setText('✨');
+		
+		// 添加文本容器
+		const textContainer = el.createDiv({ cls: 'ai-suggestion-text-container' });
+		
+		// 添加主文本
+		const text = textContainer.createSpan({ 
+			cls: suggestion.prompt ? 'ai-suggestion-text' : 'ai-suggestion-text is-empty'
+		});
+		text.setText(suggestion.displayText);
+		
+		// 如果没有输入，显示提示
+		if (!suggestion.prompt) {
+			const hint = textContainer.createSpan({ cls: 'ai-suggestion-hint' });
+			hint.setText('按 Enter 提交问题');
+		}
+		
+		// 添加快捷键提示
+		const hotkey = el.createSpan({ cls: 'ai-suggestion-hotkey' });
+		hotkey.setText('↵');
+	}
+	
+	/**
+	 * 选择建议
+	 * 
+	 * 当用户选择建议或按下 Enter 键时调用。
+	 * 提交 prompt 到 AI 服务。
+	 * 
+	 * **验证需求：2.4**
+	 * 
+	 * @param suggestion 选中的建议项
+	 * @param evt 鼠标或键盘事件
+	 */
+	selectSuggestion(suggestion: AISuggestion, evt: MouseEvent | KeyboardEvent): void {
+		// 获取当前上下文
+		const context = this.context;
+		if (!context) {
+			return;
+		}
+		
+		const editor = context.editor;
+		const prompt = suggestion.prompt;
+		
+		// 如果 prompt 为空，不提交
+		if (!prompt || prompt.trim().length === 0) {
+			return;
+		}
+		
+		// 删除触发文本（包括 `/`）
+		editor.replaceRange(
+			'',
+			context.start,
+			context.end
+		);
+		
+		// 使用 EditorUIController 提交 prompt
+		// 注意：这是一个异步操作，但 selectSuggestion 是同步的
+		// 我们不等待结果，让 EditorUIController 处理所有异步逻辑
+		this.editorUIController.submitPrompt(editor, prompt, context.start);
+		
+		if (this.plugin.settings.debugMode) {
+			console.log('[AI Editor Suggest] 提交 prompt:', prompt);
+		}
+	}
+}
