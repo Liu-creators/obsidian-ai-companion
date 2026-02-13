@@ -6,8 +6,6 @@ import { EditorUIController } from './ui/editor-ui-controller';
 import { CalloutStyleManager } from './ui/callout-style-manager';
 import { AIEditorSuggest } from './suggest';
 import { CommandRegistry } from './commands';
-import { CanvasTriggerHandler } from './canvas/canvas-trigger-handler';
-import { CanvasUIController } from './canvas/canvas-ui-controller';
 
 /**
  * Obsidian AI 扩展插件
@@ -24,8 +22,6 @@ export default class MyPlugin extends Plugin {
 	calloutStyleManager: CalloutStyleManager;
 	aiEditorSuggest: AIEditorSuggest;
 	commandRegistry: CommandRegistry;
-	canvasTriggerHandler?: CanvasTriggerHandler;
-	canvasUIController?: CanvasUIController;
 
 	async onload() {
 		// 初始化设置管理器
@@ -48,9 +44,6 @@ export default class MyPlugin extends Plugin {
 		this.aiEditorSuggest = new AIEditorSuggest(this.app, this, this.editorUIController);
 		this.registerEditorSuggest(this.aiEditorSuggest);
 
-		// 条件初始化 Canvas 功能（检查 API 可用性）
-		this.initializeCanvasFeatures();
-
 		// 初始化并注册命令
 		this.commandRegistry = new CommandRegistry(this, this.editorUIController);
 		this.commandRegistry.registerCommands();
@@ -63,40 +56,6 @@ export default class MyPlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * 条件初始化 Canvas 功能
-	 * 
-	 * ⚠️ Canvas API 是实验性功能，仅在 API 可用时初始化。
-	 * 
-	 * **验证需求：6.7**
-	 */
-	private initializeCanvasFeatures(): void {
-		try {
-			// 初始化 Canvas UI 控制器
-			this.canvasUIController = new CanvasUIController(this, this.aiClient);
-			
-			// 检查 Canvas API 是否可用
-			if (this.canvasUIController.getAPIAvailability()) {
-				// 初始化 Canvas 触发处理器
-				this.canvasTriggerHandler = new CanvasTriggerHandler(this);
-				
-				// 注册 Canvas 事件监听
-				this.canvasTriggerHandler.register();
-				
-				if (this.settings.debugMode) {
-					console.log('[AI Plugin] Canvas 功能已启用');
-				}
-			} else {
-				if (this.settings.debugMode) {
-					console.log('[AI Plugin] Canvas API 不可用，Canvas 功能已禁用');
-				}
-			}
-		} catch (error) {
-			console.error('[AI Plugin] Canvas 功能初始化失败:', error);
-			// 优雅降级：即使 Canvas 初始化失败，插件的其他功能仍然可用
-		}
-	}
-
 	onunload() {
 		// 清理编辑器 UI 资源
 		if (this.editorUIController) {
@@ -106,15 +65,6 @@ export default class MyPlugin extends Plugin {
 		// 清理 Callout 样式
 		if (this.calloutStyleManager) {
 			this.calloutStyleManager.cleanup();
-		}
-		
-		// 清理 Canvas 资源
-		if (this.canvasTriggerHandler) {
-			this.canvasTriggerHandler.unregister();
-		}
-		
-		if (this.canvasUIController) {
-			this.canvasUIController.cleanup();
 		}
 		
 		if (this.settings.debugMode) {

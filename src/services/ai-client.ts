@@ -114,7 +114,7 @@ export class AIClient {
 	 * @param attempt 当前尝试次数
 	 * @returns AI 响应
 	 */
-	private async executeRequest(request: AIRequest, attempt: number): Promise<AIResponse> {
+	private async executeRequest(request: AIRequest, _attempt: number): Promise<AIResponse> {
 		// 创建 AbortController 用于超时和取消
 		const controller = new AbortController();
 		this.activeRequests.set(request.id, controller);

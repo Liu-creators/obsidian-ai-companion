@@ -8,7 +8,7 @@
 
 import { Editor, EditorPosition, Notice } from 'obsidian';
 import { AIClient, createCancelToken } from '../services/ai-client';
-import { AIRequest, AIResponse, CancelToken } from '../types';
+import { AIRequest, CancelToken } from '../types';
 import { LoadingIndicator } from './loading-indicator';
 import { ErrorDisplay } from './error-display';
 import { ResponseRenderer } from './response-renderer';
@@ -380,7 +380,7 @@ export class EditorUIController {
 	 */
 	cleanup(): void {
 		// 取消所有活跃的请求
-		for (const [requestId, components] of this.activeComponents.entries()) {
+		for (const [_requestId, components] of this.activeComponents.entries()) {
 			if (components.cancelToken) {
 				components.cancelToken.cancel();
 			}

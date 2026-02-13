@@ -27,16 +27,10 @@ import {
  */
 export interface ErrorContext {
 	/** 错误来源 */
-	source: 'editor' | 'canvas';
+	source: 'editor';
 	
-	/** 编辑器实例（如果来源是编辑器） */
+	/** 编辑器实例 */
 	editor?: Editor;
-	
-	/** Canvas 实例（如果来源是 Canvas） */
-	canvas?: any;
-	
-	/** Canvas 节点（如果来源是 Canvas） */
-	node?: any;
 	
 	/** 编辑器位置 */
 	position?: { line: number; ch: number };
@@ -231,7 +225,7 @@ export class ErrorHandler {
 	/**
 	 * 显示错误消息
 	 * 
-	 * 在编辑器或 Canvas 中显示用户友好的错误消息。
+	 * 在编辑器中显示用户友好的错误消息。
 	 * 
 	 * **验证需求：5.1, 5.3**
 	 * 
@@ -242,11 +236,9 @@ export class ErrorHandler {
 		// 显示 Obsidian 通知
 		new Notice(error.message, 5000);
 		
-		// 在编辑器或 Canvas 中显示错误
+		// 在编辑器中显示错误
 		if (context.source === 'editor' && context.editor && context.position) {
 			this.displayEditorError(error, context.editor, context.position);
-		} else if (context.source === 'canvas' && context.node) {
-			this.displayCanvasError(error, context.node);
 		}
 	}
 	
@@ -265,22 +257,6 @@ export class ErrorHandler {
 		// 在光标位置插入错误消息
 		const errorText = `\n\n❌ **错误**: ${error.message}\n\n`;
 		editor.replaceRange(errorText, position);
-	}
-	
-	/**
-	 * 在 Canvas 中显示错误
-	 * 
-	 * @param error AI 错误对象
-	 * @param node Canvas 节点
-	 */
-	private displayCanvasError(error: AIError, node: any): void {
-		// 在节点中显示错误消息
-		// 注意：这依赖于 Canvas API，可能需要根据实际 API 调整
-		if (node && typeof node.setText === 'function') {
-			const currentText = node.text || '';
-			const errorText = `${currentText}\n\n❌ **错误**: ${error.message}`;
-			node.setText(errorText);
-		}
 	}
 	
 	/**

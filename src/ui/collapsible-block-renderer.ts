@@ -135,7 +135,7 @@ ${content}
 	 */
 	registerProcessor(plugin: Plugin): void {
 		// 注册 Markdown 后处理器，处理 details 标签
-		plugin.registerMarkdownPostProcessor((element: HTMLElement, context: MarkdownPostProcessorContext) => {
+		plugin.registerMarkdownPostProcessor((element: HTMLElement, _context: MarkdownPostProcessorContext) => {
 			// 查找所有 details 元素
 			const detailsElements = element.querySelectorAll('details');
 			

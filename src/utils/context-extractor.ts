@@ -7,7 +7,7 @@
  */
 
 import { Editor, EditorPosition } from 'obsidian';
-import { ContextScope, ContextExtractionConfig, ExtractedContext } from '../types';
+import { ContextExtractionConfig, ExtractedContext } from '../types';
 
 /**
  * 上下文提取器类

@@ -44,7 +44,6 @@ interface EditorSuggestTriggerInfo {
 export class AIEditorSuggest extends EditorSuggest<AISuggestion> {
 	private plugin: MyPlugin;
 	private editorUIController: EditorUIController;
-	private shiftPressed: boolean = false;
 	
 	constructor(app: App, plugin: MyPlugin, editorUIController: EditorUIController) {
 		super(app);
@@ -101,7 +100,7 @@ export class AIEditorSuggest extends EditorSuggest<AISuggestion> {
 	 */
 	private selectSuggestionWithContext(
 		suggestion: AISuggestion,
-		evt: KeyboardEvent,
+		_evt: KeyboardEvent,
 		contextType: 'none' | 'before-cursor' | 'settings'
 	): void {
 		const context = this.context;
@@ -336,7 +335,7 @@ export class AIEditorSuggest extends EditorSuggest<AISuggestion> {
 	 * @param suggestion 选中的建议项
 	 * @param evt 鼠标或键盘事件
 	 */
-	selectSuggestion(suggestion: AISuggestion, evt: MouseEvent | KeyboardEvent): void {
+	selectSuggestion(suggestion: AISuggestion, _evt: MouseEvent | KeyboardEvent): void {
 		// 获取当前上下文
 		const context = this.context;
 		if (!context) {

@@ -6,7 +6,7 @@
  * **验证需求：8.1, 8.2, 8.3**
  */
 
-import { Editor, MarkdownView } from 'obsidian';
+import { Editor } from 'obsidian';
 import { EditorUIController } from '../ui/editor-ui-controller';
 import type MyPlugin from '../main';
 
@@ -17,11 +17,9 @@ import type MyPlugin from '../main';
  */
 export class CommandRegistry {
 	private plugin: MyPlugin;
-	private editorUIController: EditorUIController;
 	
-	constructor(plugin: MyPlugin, editorUIController: EditorUIController) {
+	constructor(plugin: MyPlugin, _editorUIController: EditorUIController) {
 		this.plugin = plugin;
-		this.editorUIController = editorUIController;
 	}
 	
 	/**
@@ -53,7 +51,7 @@ export class CommandRegistry {
 			id: 'trigger-ai-input',
 			name: '触发 AI 输入',
 			icon: 'bot',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: (editor: Editor) => {
 				// 获取当前光标位置
 				const cursor = editor.getCursor();
 				
@@ -88,7 +86,7 @@ export class CommandRegistry {
 			id: 'ask-ai-with-selection',
 			name: '使用选中文本询问 AI',
 			icon: 'message-square',
-			editorCheckCallback: (checking: boolean, editor: Editor, view: MarkdownView): boolean => {
+			editorCheckCallback: (checking: boolean, editor: Editor): boolean => {
 				// 检查是否有选中的文本
 				const selection = editor.getSelection();
 				const hasSelection: boolean = !!(selection && selection.trim().length > 0);

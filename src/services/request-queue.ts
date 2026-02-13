@@ -6,7 +6,7 @@
  * **验证需求：4.5**
  */
 
-import { AIRequest, AIResponse, AIError, QueuedRequest, QueueStatus } from '../types';
+import { AIRequest, AIResponse, QueuedRequest, QueueStatus } from '../types';
 import { AIClient } from './ai-client';
 
 /**

@@ -64,7 +64,7 @@ export interface AIRequest {
 	timestamp: number;
 	
 	/** 请求来源 */
-	source: 'editor' | 'canvas';
+	source: 'editor';
 	
 	/** 取消令牌 */
 	cancelToken?: CancelToken;
