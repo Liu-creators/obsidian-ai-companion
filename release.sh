@@ -32,7 +32,11 @@ zip -r context-pilot.zip main.js manifest.json styles.css
 # 4. Git operations
 echo -e "${BLUE}Committing changes...${NC}"
 git add package.json manifest.json versions.json
-git commit -m "chore: release ${NEW_VERSION}"
+if ! git diff --cached --quiet; then
+    git commit -m "chore: release ${NEW_VERSION}"
+else
+    echo -e "${BLUE}No changes to commit, skipping commit step...${NC}"
+fi
 
 
 # 5. Create git tag
