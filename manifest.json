@@ -1,7 +1,7 @@
 {
 	"id": "context-pilot",
 	"name": "Context Pilot",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"minAppVersion": "1.0.0",
 	"description": "你的 AI 写作伙伴。在 Markdown 编辑器和 Canvas 画布中提供智能辅助，通过上下文感知和快捷交互提升思维整理效率。",
 	"author": "SolveSomes",
