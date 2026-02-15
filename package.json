@@ -1,6 +1,6 @@
 {
 	"name": "context-pilot",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "你的 AI 写作伙伴 - 为 Obsidian 提供智能辅助功能",
 	"main": "main.js",
 	"type": "module",
