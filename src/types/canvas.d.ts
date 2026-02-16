@@ -7,7 +7,7 @@
  * 验证需求：10.1-10.8
  */
 
-import { View, WorkspaceLeaf } from 'obsidian';
+import { View, WorkspaceLeaf, TFile } from 'obsidian';
 
 /**
  * 二维坐标点接口
@@ -86,7 +86,7 @@ export interface CanvasTextNode extends CanvasNode {
 export interface CanvasFileNode extends CanvasNode {
 	type: 'file';
 	/** 文件路径 */
-	file: string;
+	file: string | TFile | { path: string; name?: string };
 	/** 子路径（用于定位到文件的特定部分，如标题） */
 	subpath?: string;
 }

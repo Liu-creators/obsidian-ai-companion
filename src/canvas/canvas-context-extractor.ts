@@ -38,6 +38,15 @@ export interface CanvasContextResult {
 }
 
 /**
+ * 通用边接口，用于兼容不同版本的 Canvas 数据结构
+ */
+type GenericEdge = Partial<CanvasEdge & CanvasInternalEdge> & { 
+	text?: string; 
+	getText?: () => string; 
+	[key: string]: unknown;
+};
+
+/**
  * Canvas 上下文提取器
  * 
  * 负责从 Canvas 节点中提取上下文信息，支持提取单个节点或包含相关节点的上下文。
@@ -80,23 +89,23 @@ export class CanvasContextExtractor {
 		else if (isFileNode(node)) {
 			let fileName = '';
 			let fileContent = '';
-			const nodeAny = node as any;
+			// const nodeAny = node as any;
 			let tFile: TFile | null = null;
 			
 			// 1. 获取文件名和 TFile 对象
-			if (typeof nodeAny.file === 'string') {
+			if (typeof node.file === 'string') {
 				// 情况 A: file 是路径字符串
-				fileName = nodeAny.file.split('/').pop() || nodeAny.file;
+				fileName = node.file.split('/').pop() || node.file;
 				if (this.app) {
-					const abstractFile = this.app.vault.getAbstractFileByPath(nodeAny.file);
+					const abstractFile = this.app.vault.getAbstractFileByPath(node.file);
 					if (abstractFile instanceof TFile) {
 						tFile = abstractFile;
 					}
 				}
-			} else if (nodeAny.file && (nodeAny.file instanceof TFile || nodeAny.file.path)) {
+			} else if (node.file && (node.file instanceof TFile || 'path' in node.file)) {
 				// 情况 B: file 是 TFile 对象或类似对象
-				const fileObj = nodeAny.file;
-				fileName = fileObj.name || fileObj.path.split('/').pop();
+				const fileObj = node.file;
+				fileName = fileObj.name || fileObj.path.split('/').pop() || 'Unknown File';
 				if (fileObj instanceof TFile) {
 					tFile = fileObj;
 				} else if (this.app && fileObj.path) {
@@ -213,20 +222,21 @@ export class CanvasContextExtractor {
 			
 			// 如果节点没有 type 属性，尝试通过特征判断
 			if (!node.type) {
-				const nodeAny = node as any;
-				if (typeof nodeAny.text === 'string') {
-					content = nodeAny.text || '';
-				} else if (typeof nodeAny.file === 'string') {
+				const nodeUnknown = node as unknown as Record<string, unknown>;
+				if (typeof nodeUnknown.text === 'string') {
+					content = nodeUnknown.text || '';
+				} else if (typeof nodeUnknown.file === 'string') {
 					// Fallback to calling extractNodeContent recursively if possible, but for now simple handling
 					// Better to just let isFileNode catch it, but here we are in "else"
 					// We should probably just treat it as file if it looks like one
-					const fileName = nodeAny.file.split('/').pop() || nodeAny.file;
+					const fileName = nodeUnknown.file.split('/').pop() || nodeUnknown.file;
 					content = `文件: ${fileName} (无法读取内容)`;
-				} else if (nodeAny.file && typeof nodeAny.file === 'object' && nodeAny.file.path) {
-					const fileName = nodeAny.file.name || nodeAny.file.path.split('/').pop();
+				} else if (nodeUnknown.file && typeof nodeUnknown.file === 'object' && 'path' in (nodeUnknown.file as Record<string, unknown>)) {
+					const fileObj = nodeUnknown.file as { path: string; name?: string };
+					const fileName = fileObj.name || fileObj.path.split('/').pop();
 					content = `文件: ${fileName} (无法读取内容)`;
-				} else if (typeof nodeAny.url === 'string') {
-					content = `链接: ${nodeAny.url}`;
+				} else if (typeof nodeUnknown.url === 'string') {
+					content = `链接: ${nodeUnknown.url}`;
 				} else {
 					// 尝试输出更多信息用于调试
 					content = `[未知节点 (无类型标识)]\nID: ${node.id}\nKeys: ${Object.keys(node).join(', ')}`;
@@ -437,25 +447,30 @@ export class CanvasContextExtractor {
 		const internalEdges: string[] = [];
 
 		// 尝试获取 edges 集合
-		let edges: any = canvas.edges;
+		let edges: unknown = canvas.edges;
 		
 		// 如果直接访问 edges 失败，尝试访问内部 canvas 对象的 edges (Obsidian 内部结构常见模式)
-		if (!edges || (Array.isArray(edges) && edges.length === 0) || (edges instanceof Map && edges.size === 0)) {
-			const internalCanvas = (canvas as any).canvas;
+		const isEdgesEmpty = !edges || 
+			(Array.isArray(edges) && edges.length === 0) || 
+			(edges instanceof Map && edges.size === 0);
+
+		if (isEdgesEmpty) {
+			const canvasUnknown = canvas as unknown as Record<string, unknown>;
+			const internalCanvas = canvasUnknown.canvas as Record<string, unknown> | undefined;
 			if (internalCanvas && internalCanvas.edges) {
 				edges = internalCanvas.edges;
 			}
 		}
 
 		// 统一转换为数组进行遍历
-		let edgesArray: any[] = [];
+		let edgesArray: GenericEdge[] = [];
 		if (Array.isArray(edges)) {
-			edgesArray = edges;
+			edgesArray = edges as GenericEdge[];
 		} else if (edges instanceof Map) {
-			edgesArray = Array.from(edges.values());
+			edgesArray = Array.from(edges.values()) as GenericEdge[];
 		} else if (edges && typeof edges === 'object') {
 			// 可能是对象形式的 Map
-			edgesArray = Object.values(edges);
+			edgesArray = Object.values(edges) as GenericEdge[];
 		}
 
 		if (edgesArray.length > 0) {
@@ -514,8 +529,13 @@ export class CanvasContextExtractor {
 			const text = node.text || '';
 			return `文本[${text.substring(0, 20).replace(/\n/g, ' ')}${text.length > 20 ? '...' : ''}]`;
 		} else if (isFileNode(node)) {
-			const nodeAny = node as any;
-			const fileName = typeof nodeAny.file === 'string' ? nodeAny.file : (nodeAny.file?.path || '文件');
+			// const nodeAny = node as any;
+			let fileName = '文件';
+			if (typeof node.file === 'string') {
+				fileName = node.file;
+			} else if (node.file && typeof node.file === 'object' && 'path' in node.file) {
+				fileName = node.file.path;
+			}
 			return `文件[${fileName.split('/').pop()}]`;
 		} else if (isLinkNode(node)) {
 			return `链接[${node.url}]`;
