@@ -6,7 +6,7 @@
  * 验证需求：1.1, 1.2, 1.3
  */
 
-import { Plugin, Menu, Notice, EventRef } from 'obsidian';
+import { Plugin, Menu, Notice, EventRef, WorkspaceLeaf } from 'obsidian';
 import type { CanvasUIController } from './canvas-ui-controller';
 import type { Canvas, CanvasNode } from '../types/canvas';
 import { CanvasInputModal } from './canvas-input-modal';
@@ -39,10 +39,10 @@ export class CanvasMenuHandler {
 	 */
 	register(): void {
 		try {
-			const workspace = this.plugin.app.workspace as unknown;
+			const workspace = this.plugin.app.workspace;
 			
 			// 监听活动叶子变化,当切换到 Canvas 视图时设置观察器
-			const activeLeafRef = workspace.on('active-leaf-change', (leaf: unknown) => {
+			const activeLeafRef = workspace.on('active-leaf-change', (leaf: WorkspaceLeaf | null) => {
 				if (leaf?.view?.getViewType() === 'canvas') {
 					setTimeout(() => {
 						this.setupCanvasObserver(leaf);
@@ -66,7 +66,7 @@ export class CanvasMenuHandler {
 			}, 500);
 			
 			// 同时保留右键菜单功能
-			const menuEventRef = workspace.on(
+			const menuEventRef = (workspace as unknown).on(
 				'canvas:node-menu',
 				(menu: Menu, node: CanvasNode, canvas: Canvas) => {
 					this.handleNodeMenu(menu, node, canvas);
@@ -94,9 +94,9 @@ export class CanvasMenuHandler {
 	 * 
 	 * 监听工具栏的出现,自动添加 AI 按钮
 	 */
-	private setupCanvasObserver(leaf: unknown): void {
+	private setupCanvasObserver(leaf: WorkspaceLeaf): void {
 		try {
-			const canvasView = leaf.view;
+			const canvasView = leaf.view as unknown;
 			if (!canvasView || !canvasView.canvas) {
 				return;
 			}
@@ -152,11 +152,11 @@ export class CanvasMenuHandler {
 	 */
 	private addToolbarButtonsToAllNodes(): void {
 		try {
-			const workspace = this.plugin.app.workspace as unknown;
+			const workspace = this.plugin.app.workspace;
 			const canvasLeaves = workspace.getLeavesOfType('canvas');
 			
 			for (const leaf of canvasLeaves) {
-				const canvasView = leaf.view;
+				const canvasView = leaf.view as unknown;
 				if (canvasView && canvasView.canvas) {
 					const canvas = canvasView.canvas as Canvas;
 					this.addToolbarButton(canvas);
@@ -204,16 +204,16 @@ export class CanvasMenuHandler {
 				e.preventDefault();
 				
 				try {
-					const workspace = self.plugin.app.workspace as unknown;
+					const workspace = self.plugin.app.workspace;
 					const canvasLeaves = workspace.getLeavesOfType('canvas');
 					
-					if (canvasLeaves.length === 0) {
+					if (canvasLeaves.length === 0 || !canvasLeaves[0]) {
 						new Notice('请在 Canvas 视图中使用此功能');
 						return;
 					}
 					
 					const leaf = canvasLeaves[0];
-					const canvasView = leaf.view;
+					const canvasView = leaf.view as unknown;
 					const currentCanvas = canvasView.canvas;
 					
 					if (!currentCanvas) {

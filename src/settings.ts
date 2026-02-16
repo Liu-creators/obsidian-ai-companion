@@ -289,6 +289,11 @@ export const DEFAULT_SETTINGS: AIPluginSettings = {
  * 
  * **验证需求：1.1, 1.2, 1.3, 7.2, 7.5**
  */
+/**
+ * 任意类型的快捷键配置
+ */
+type AnyShortcut = ContextShortcut | CanvasContextShortcut;
+
 export class AIPluginSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 	private activeTab: 'ai-service' | 'interaction' | 'context' | 'canvas' | 'appearance' = 'ai-service';
@@ -669,7 +674,7 @@ export class AIPluginSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					const shortcuts = this.plugin.settings.contextShortcuts;
 					if (shortcuts[index]) {
-						shortcuts[index].contextType = value as unknown;
+						shortcuts[index].contextType = value as 'none' | 'before-cursor' | 'settings';
 						await this.plugin.saveSettings();
 						this.display();
 					}
@@ -869,7 +874,7 @@ export class AIPluginSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						const shortcuts = this.plugin.settings.canvasSettings.shortcuts;
 						if (shortcuts[index]) {
-							shortcuts[index].contextType = value as unknown;
+							shortcuts[index].contextType = value as 'current-node' | 'connected-nodes';
 							// 更新显示名称
 							shortcuts[index].displayName = value === 'current-node' ? '仅当前节点' : '包含相连节点';
 							await this.plugin.saveSettings();
@@ -1042,7 +1047,7 @@ export class AIPluginSettingTab extends PluginSettingTab {
 	/**
 	 * 获取快捷键描述
 	 */
-	private getShortcutDescription(shortcut: unknown): string {
+	private getShortcutDescription(shortcut: AnyShortcut): string {
 		// 根据 contextType 返回描述
 		if (shortcut.contextType === 'current-node') return `仅发送当前节点内容`;
 		if (shortcut.contextType === 'connected-nodes') return `发送包含相连节点上下文的内容`;
@@ -1058,7 +1063,7 @@ export class AIPluginSettingTab extends PluginSettingTab {
 	/**
 	 * 格式化快捷键显示
 	 */
-	private formatShortcut(shortcut: unknown): string {
+	private formatShortcut(shortcut: AnyShortcut): string {
 		const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 		const mods = shortcut.modifiers.map((m: string) => {
 			if (m === 'Mod') return isMac ? 'Cmd' : 'Ctrl';

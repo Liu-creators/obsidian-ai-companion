@@ -514,7 +514,7 @@ export class CanvasInputModal extends Modal {
 			let count = 0;
 
 			selection.forEach((node) => {
-				const nodeEl = (node as unknown).nodeEl as HTMLElement;
+				const nodeEl = node.nodeEl;
 				if (nodeEl) {
 					const rect = nodeEl.getBoundingClientRect();
 					if (rect.width > 0 && rect.height > 0) {
@@ -541,8 +541,8 @@ export class CanvasInputModal extends Modal {
 
 		// 回退到单节点
 		if (!targetRect) {
-			const node = this.triggerNode as unknown;
-			const nodeEl = node.nodeEl as HTMLElement;
+			const node = this.triggerNode;
+			const nodeEl = node.nodeEl;
 			if (!nodeEl) return;
 			const rect = nodeEl.getBoundingClientRect();
 			targetRect = {

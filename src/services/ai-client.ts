@@ -350,14 +350,16 @@ export class AIClient {
 	 * @returns 提取的内容文本
 	 */
 	private extractContent(data: unknown): string {
+		const responseData = data;
+		
 		// 支持 OpenAI 格式
-		if (data.choices && data.choices.length > 0) {
-			return data.choices[0].message?.content || data.choices[0].text || '';
+		if (responseData.choices && responseData.choices.length > 0) {
+			return responseData.choices[0].message?.content || responseData.choices[0].text || '';
 		}
 		
 		// 支持其他格式
-		if (data.content) {
-			return data.content;
+		if (responseData.content) {
+			return responseData.content;
 		}
 		
 		return '';

@@ -63,6 +63,9 @@ export interface CanvasNode {
 	
 	/** 节点标签（可选） */
 	label?: string;
+	
+	/** 节点 DOM 元素 */
+	nodeEl: HTMLElement;
 }
 
 /**

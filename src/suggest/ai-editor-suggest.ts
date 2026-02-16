@@ -7,10 +7,11 @@
  * **验证需求：2.1, 2.3, 2.4, 2.5, 2.7**
  */
 
-import { App, Editor, EditorPosition, EditorSuggest, TFile, Scope } from 'obsidian';
+import { App, Editor, EditorPosition, EditorSuggest, TFile, Scope, Modifier } from 'obsidian';
 import { AISuggestion } from '../types';
 import { EditorUIController } from '../ui/editor-ui-controller';
 import type MyPlugin from '../main';
+import type { ContextShortcut } from '../settings';
 
 /**
  * EditorSuggestContext 接口
@@ -72,7 +73,7 @@ export class AIEditorSuggest extends EditorSuggest<AISuggestion> {
 				}
 				
 				// 注册快捷键
-				scope.register(shortcut.modifiers as unknown, shortcut.key, (evt: KeyboardEvent) => {
+				scope.register(shortcut.modifiers as Modifier[], shortcut.key, (evt: KeyboardEvent) => {
 					evt.preventDefault();
 					evt.stopPropagation();
 					
@@ -291,7 +292,7 @@ export class AIEditorSuggest extends EditorSuggest<AISuggestion> {
 	 * @param shortcut 快捷键配置
 	 * @returns 格式化的快捷键字符串
 	 */
-	private formatShortcut(shortcut: unknown): string {
+	private formatShortcut(shortcut: ContextShortcut): string {
 		const parts = shortcut.modifiers.map((mod: string) => {
 			// 在 Mac 上将 Mod 显示为 Cmd，其他平台显示为 Ctrl
 			if (mod === 'Mod') {

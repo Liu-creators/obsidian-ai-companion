@@ -362,7 +362,7 @@ export class CanvasUIController {
 		prompt: string,
 		isMultiSelection: boolean = false
 	): CanvasTextNode {
-		// 获取插件设置
+		// 验证需求：10.3
 		const settings = this.plugin.settings;
 		const canvasSettings = settings.canvasSettings;
 
@@ -480,7 +480,7 @@ export class CanvasUIController {
 	): void {
 		try {
 			// 获取插件设置
-			const settings = (this.plugin as unknown).settings as AIPluginSettings;
+			const settings = this.plugin.settings;
 			const canvasSettings = settings.canvasSettings;
 
 			// 计算错误节点位置（与响应节点相同的位置逻辑）
